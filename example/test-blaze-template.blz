@@ -1,0 +1,73 @@
+
+<singularity name="people" route="/people">
+  <content>
+    <ul>
+      {{#each people}}
+      <li class="{{#if selected}}selected{{/if}}">{{name}}</li>
+      {{/each}}
+    </ul>
+  </content>
+  <script>
+    console.log("This code is running anywhere!");
+    People = new Mongo.Collection("people");
+  </script>
+  <script where="server">
+    console.log("This code is running on the server!");
+    People.allow({
+      insert: function() {
+        return true;
+      }
+    });
+    // Meteor.publish("people", function() {
+    //   return People.find();
+    // });
+    Meteor.startup(function() {
+      console.log("meteor startup");
+      People.remove({});
+      People.insert({name: "Rahul Choudhury", selected: false});
+      People.insert({name: "Alice Yu", selected: false});
+      People.insert({name: "Arunoda Susiripala", selected: false});
+      People.insert({name: "Sashko Stubailo", selected: true});
+      People.insert({name: "Sam Noland", selected: false});
+      People.insert({name: "Slava Kim", selected: false});
+      People.insert({name: "Diedra Rater", selected: false});
+    });
+  </script>
+  <script where="client">
+    console.log("This code is running on the client and `this` is set to" +
+      "the current template!");
+    var self = this;
+    self.onCreated(function() {
+      this.subscribe("people");
+      this.collection = People;
+      this.selectedPerson = new ReactiveVar();
+    });
+    self.helpers({
+      people: function() {
+        return Template.instance().collection.find();
+      },
+      selected: function() {
+        return this._id === Template.instance().selectedPerson.get();
+      }
+    });
+    self.events({
+      'click li': function(evt, tmpl) {
+        tmpl.selectedPerson.set(this._id);
+      }
+    });
+  </script>
+  <style>
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    li {
+      padding: 1rem;
+      border-bottom: solid 1px #eee;
+    }
+    li.selected {
+      background-color: #ffc;
+    }
+  </style>
+</singularity>
